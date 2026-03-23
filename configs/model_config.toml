@@ -1,0 +1,6 @@
+[inference]
+model_path              = "models/acoustic_classifier.onnx"
+input_shape             = [1, 120, 128]
+classes                 = ["Cargo","Tanker","Tug","Passengership","Submarine","Biological","Unknown"]
+confidence_threshold    = 0.6
+submarine_alert_threshold = 0.8

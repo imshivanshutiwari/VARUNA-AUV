@@ -1,0 +1,15 @@
+[package]
+name    = "varuna-data"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hound        = { workspace = true }
+ndarray      = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+thiserror    = { workspace = true }
+anyhow       = { workspace = true }
+tracing      = { workspace = true }
+reqwest      = { workspace = true }
+zip          = { workspace = true }
