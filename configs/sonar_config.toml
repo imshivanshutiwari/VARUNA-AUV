@@ -1,0 +1,38 @@
+[audio]
+sample_rate = 44100
+chunk_size  = 4096
+channels    = 1
+
+[stft]
+window_size = 1024
+hop_size    = 256
+window_type = "hann"
+
+[lofar]
+integration_time_s  = 0.5
+freq_min_hz         = 1.0
+freq_max_hz         = 500.0
+freq_resolution_hz  = 0.5
+
+[demon]
+band_low_hz      = 2000.0
+band_high_hz     = 20000.0
+envelope_lpf_hz  = 100.0
+
+[mfcc]
+n_mfcc  = 40
+n_mels  = 128
+fmin    = 20.0
+fmax    = 8000.0
+
+[beamformer]
+n_elements         = 16
+element_spacing_m  = 0.037
+sound_speed_mps    = 1500.0
+diagonal_loading   = 0.001
+angle_resolution_deg = 1.0
+
+[cfar]
+guard_cells    = 2
+training_cells = 8
+pfa            = 0.0001

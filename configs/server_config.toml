@@ -1,0 +1,9 @@
+[server]
+host       = "127.0.0.1"
+port       = 3000
+static_dir = "crates/varuna-server/static"
+open_browser = true
+
+[websocket]
+update_interval_ms = 50
+max_clients        = 32

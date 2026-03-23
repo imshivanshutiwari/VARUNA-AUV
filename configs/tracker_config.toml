@@ -1,0 +1,18 @@
+[kalman]
+process_noise_bearing  = 0.01
+process_noise_range    = 0.1
+process_noise_depth    = 0.05
+measurement_noise_bearing = 0.5
+measurement_noise_range   = 5.0
+measurement_noise_depth   = 2.0
+dt_s = 0.05
+
+[association]
+gating_threshold      = 9.21
+max_coasting_frames   = 10
+
+[fingerprint]
+n_hash_tables       = 8
+n_bits              = 16
+peak_window_s       = 0.5
+match_threshold     = 0.7
