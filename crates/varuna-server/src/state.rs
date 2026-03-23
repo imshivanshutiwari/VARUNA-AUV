@@ -73,9 +73,7 @@ impl AppState {
             });
         }
 
-        Ok(Self {
-            sonar_frame,
-        })
+        Ok(Self { sonar_frame })
     }
 
     fn generate_demo_frame(clf: &AcousticClassifier) -> SonarFrame {

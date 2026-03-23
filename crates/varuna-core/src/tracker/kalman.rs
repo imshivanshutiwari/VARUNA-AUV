@@ -106,8 +106,7 @@ impl KalmanTracker {
         // Predict all tracks
         for track in &mut self.tracks {
             track.state = self.f_mat * track.state;
-            track.covariance =
-                self.f_mat * track.covariance * self.f_mat.transpose() + self.q_mat;
+            track.covariance = self.f_mat * track.covariance * self.f_mat.transpose() + self.q_mat;
         }
 
         let mut assigned = vec![false; measurements.len()];
