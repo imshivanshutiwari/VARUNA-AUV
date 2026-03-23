@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VARUNA-AUV · Naval Operations Center</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<header>
+  <div class="logo">⚓ VARUNA-AUV</div>
+  <div class="header-center">NAVAL OPERATIONS CENTER</div>
+  <div class="header-right">
+    <span id="conn-dot" class="dot red"></span>
+    <span id="conn-label">Disconnected</span>
+    &nbsp;|&nbsp;
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<div class="grid">
+
+  <!-- Row 1 -->
+  <section class="panel span2" id="panel-spectrum">
+    <div class="panel-title">POWER SPECTRUM (dB)</div>
+    <canvas id="chart-spectrum"></canvas>
+  </section>
+
+  <section class="panel" id="panel-lofar">
+    <div class="panel-title">LOFARgram</div>
+    <canvas id="chart-lofar"></canvas>
+  </section>
+
+  <!-- Row 2 -->
+  <section class="panel" id="panel-demon">
+    <div class="panel-title">DEMON SPECTRUM</div>
+    <canvas id="chart-demon"></canvas>
+    <div class="stat-row">
+      <span>Blade Rate</span>
+      <span id="blade-rate" class="val">—</span>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-mfcc">
+    <div class="panel-title">MFCC COEFFICIENTS</div>
+    <canvas id="chart-mfcc"></canvas>
+  </section>
+
+  <section class="panel" id="panel-classify">
+    <div class="panel-title">TARGET CLASSIFICATION</div>
+    <canvas id="chart-classify"></canvas>
+    <div class="stat-row">
+      <span>Label</span>
+      <span id="clf-label" class="val">—</span>
+    </div>
+    <div class="stat-row">
+      <span>Confidence</span>
+      <span id="clf-conf" class="val">—</span>
+    </div>
+    <div id="submarine-alert" class="alert hidden">⚠ SUBMARINE DETECTED</div>
+  </section>
+
+  <!-- Row 3 -->
+  <section class="panel span2" id="panel-tracks">
+    <div class="panel-title">TRACK TABLE</div>
+    <table>
+      <thead><tr><th>ID</th><th>Bearing (°)</th><th>Range (m)</th><th>Label</th><th>Confidence</th></tr></thead>
+      <tbody id="track-tbody"></tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="panel-doa">
+    <div class="panel-title">BEARING (DOA)</div>
+    <canvas id="chart-doa"></canvas>
+    <div class="stat-row"><span>DOA</span><span id="doa-val" class="val">—</span></div>
+  </section>
+
+  <!-- Row 4 -->
+  <section class="panel" id="panel-cfar">
+    <div class="panel-title">CFAR DETECTIONS</div>
+    <canvas id="chart-cfar"></canvas>
+    <div class="stat-row"><span>Detections</span><span id="cfar-count" class="val">0</span></div>
+  </section>
+
+  <section class="panel" id="panel-waterfall">
+    <div class="panel-title">SPECTROGRAM WATERFALL</div>
+    <canvas id="chart-waterfall"></canvas>
+  </section>
+
+  <section class="panel" id="panel-status">
+    <div class="panel-title">SYSTEM STATUS</div>
+    <div class="status-grid">
+      <div class="status-item"><span class="status-dot green"></span>DSP Engine</div>
+      <div class="status-item"><span class="status-dot green"></span>Beamformer</div>
+      <div class="status-item"><span class="status-dot green"></span>Tracker</div>
+      <div class="status-item"><span class="status-dot green"></span>Classifier</div>
+      <div class="status-item"><span class="status-dot green"></span>LOFARgram</div>
+      <div class="status-item"><span class="status-dot green"></span>DEMON</div>
+    </div>
+    <div class="stat-row"><span>Timestamp</span><span id="ts-val" class="val">—</span></div>
+  </section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

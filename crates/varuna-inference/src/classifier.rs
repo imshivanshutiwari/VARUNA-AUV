@@ -2,7 +2,6 @@
 use crate::softmax::{softmax, argmax};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use ndarray::Array;
 use std::path::Path;
 use tract_onnx::prelude::*;
 
@@ -58,6 +57,19 @@ pub struct ClassificationResult {
     pub above_threshold: bool,
 }
 
+impl Default for ClassificationResult {
+    fn default() -> Self {
+        Self {
+            label: "Unknown".to_string(),
+            class_index: 6,
+            confidence: 0.0,
+            probabilities: vec![0.0; 7],
+            is_submarine_alert: false,
+            above_threshold: false,
+        }
+    }
+}
+
 /// Acoustic target classifier backed by an ONNX model (via tract).
 pub struct AcousticClassifier {
     config: ClassifierConfig,
@@ -97,12 +109,12 @@ impl AcousticClassifier {
             if features.len() < expected {
                 return Err(ClassifierError::InvalidInputShape);
             }
-            let input: Tensor = Array::from_shape_vec(
+            let array = tract_ndarray::Array3::from_shape_vec(
                 (1usize, n_frames, n_mels),
                 features[..expected].to_vec(),
             )
-            .map_err(|_| ClassifierError::InvalidInputShape)?
-            .into();
+            .map_err(|_| ClassifierError::InvalidInputShape)?;
+            let input: Tensor = array.into_tensor();
             let result = model
                 .run(tvec![input.into()])
                 .map_err(|e| ClassifierError::InferenceError(e.to_string()))?;

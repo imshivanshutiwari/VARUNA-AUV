@@ -1,7 +1,7 @@
 //! VARUNA-AUV Naval Operations Center – main entry point.
 use std::net::SocketAddr;
 use axum::{Router, routing::get};
-use tower_http::fs::ServeDir;
+use tower_http::services::ServeDir;
 use tower_http::cors::{CorsLayer, Any};
 use tracing_subscriber::EnvFilter;
 

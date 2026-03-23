@@ -40,7 +40,7 @@ impl Stft {
         let n_bins = self.num_bins();
         let mut out = Array2::<f32>::zeros((n_frames, n_bins));
 
-        for (frame_idx, row) in out.rows_mut().into_iter().enumerate() {
+        for (frame_idx, mut row) in out.rows_mut().into_iter().enumerate() {
             let start = frame_idx * self.hop_size;
             let mut frame: Vec<f32> = signal[start..start + self.window_size]
                 .iter()
@@ -69,7 +69,7 @@ impl Stft {
         let n_bins = self.num_bins();
         let mut out = Array2::<f32>::zeros((n_frames, n_bins));
 
-        for (frame_idx, row) in out.rows_mut().into_iter().enumerate() {
+        for (frame_idx, mut row) in out.rows_mut().into_iter().enumerate() {
             let start = frame_idx * self.hop_size;
             let mut frame: Vec<f32> = signal[start..start + self.window_size]
                 .iter()

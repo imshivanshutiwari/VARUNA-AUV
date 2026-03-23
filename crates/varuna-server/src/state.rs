@@ -1,10 +1,8 @@
 //! Shared application state.
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use varuna_core::{Stft, WelchPsd, Lofargram, DemonProcessor, MfccExtractor, MvdrBeamformer, CfarDetector, KalmanTracker, AcousticFingerprinter};
-use varuna_core::tracker::kalman::KalmanConfig;
+use varuna_core::{Stft, Lofargram, DemonProcessor, MfccExtractor, MvdrBeamformer, CfarDetector};
 use varuna_inference::{AcousticClassifier, ClassifierConfig};
-use varuna_data::WavReader;
 use serde::{Deserialize, Serialize};
 
 /// Live sonar / tracking data broadcast to WebSocket clients.
@@ -46,6 +44,7 @@ pub struct TrackDto {
     pub confidence: f32,
 }
 
+#[derive(Clone)]
 pub struct AppState {
     pub sonar_frame: Arc<RwLock<SonarFrame>>,
     pub classifier: Arc<AcousticClassifier>,
@@ -186,20 +185,6 @@ impl AppState {
                 label: "Cargo".to_string(),
                 confidence: 0.82,
             }],
-        }
-    }
-}
-
-// Implement Default for ClassificationResult so we can use unwrap_or_default
-impl Default for varuna_inference::ClassificationResult {
-    fn default() -> Self {
-        Self {
-            label: "Unknown".to_string(),
-            class_index: 6,
-            confidence: 0.0,
-            probabilities: vec![0.0; 7],
-            is_submarine_alert: false,
-            above_threshold: false,
         }
     }
 }
