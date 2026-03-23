@@ -105,9 +105,9 @@ impl KalmanTracker {
     pub fn update(&mut self, measurements: &[(f32, f32)]) -> &[Track] {
         // Predict all tracks
         for track in &mut self.tracks {
-            track.state = &self.f_mat * &track.state;
+            track.state = self.f_mat * track.state;
             track.covariance =
-                &self.f_mat * &track.covariance * self.f_mat.transpose() + &self.q_mat;
+                self.f_mat * track.covariance * self.f_mat.transpose() + self.q_mat;
         }
 
         let mut assigned = vec![false; measurements.len()];
@@ -120,9 +120,9 @@ impl KalmanTracker {
                     continue;
                 }
                 let z = Vector2::new(bearing, range);
-                let z_pred = &self.h_mat * &track.state;
+                let z_pred = self.h_mat * track.state;
                 let innov = z - z_pred;
-                let s = &self.h_mat * &track.covariance * self.h_mat.transpose() + &self.r_mat;
+                let s = self.h_mat * track.covariance * self.h_mat.transpose() + self.r_mat;
                 let s_inv = match s.try_inverse() {
                     Some(inv) => inv,
                     None => continue,
@@ -138,17 +138,17 @@ impl KalmanTracker {
                 track.coasting_frames = 0;
                 // Kalman update
                 let z = Vector2::new(measurements[j].0, measurements[j].1);
-                let z_pred = &self.h_mat * &track.state;
+                let z_pred = self.h_mat * track.state;
                 let innov = z - z_pred;
-                let s = &self.h_mat * &track.covariance * self.h_mat.transpose() + &self.r_mat;
+                let s = self.h_mat * track.covariance * self.h_mat.transpose() + self.r_mat;
                 let s_inv = match s.try_inverse() {
                     Some(inv) => inv,
                     None => continue,
                 };
-                let k_gain: Matrix4x2<f32> = &track.covariance * self.h_mat.transpose() * s_inv;
-                track.state += &k_gain * innov;
-                let i_kh = Matrix4::identity() - &k_gain * &self.h_mat;
-                track.covariance = i_kh * &track.covariance;
+                let k_gain: Matrix4x2<f32> = track.covariance * self.h_mat.transpose() * s_inv;
+                track.state += k_gain * innov;
+                let i_kh = Matrix4::identity() - k_gain * self.h_mat;
+                track.covariance = i_kh * track.covariance;
             } else {
                 track.coasting_frames += 1;
             }

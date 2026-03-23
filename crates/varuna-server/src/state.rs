@@ -47,7 +47,6 @@ pub struct TrackDto {
 #[derive(Clone)]
 pub struct AppState {
     pub sonar_frame: Arc<RwLock<SonarFrame>>,
-    pub classifier: Arc<AcousticClassifier>,
 }
 
 impl AppState {
@@ -76,7 +75,6 @@ impl AppState {
 
         Ok(Self {
             sonar_frame,
-            classifier,
         })
     }
 
@@ -165,7 +163,7 @@ impl AppState {
         };
         let clf_result = clf.classify(&features).unwrap_or_default();
 
-        let timestamp_ms = (tick * 50) as u64;
+        let timestamp_ms = tick * 50;
 
         SonarFrame {
             timestamp_ms,

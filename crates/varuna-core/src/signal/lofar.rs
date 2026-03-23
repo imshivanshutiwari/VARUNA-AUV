@@ -76,7 +76,7 @@ impl Lofargram {
         }
 
         // Integrate (average) over integration_frames
-        let n_slices = (all_power.len() + self.integration_frames - 1) / self.integration_frames;
+        let n_slices = all_power.len().div_ceil(self.integration_frames);
         let mut out = Array2::<f32>::zeros((n_slices, n_out_bins));
         for (slice_idx, chunk) in all_power.chunks(self.integration_frames).enumerate() {
             for bin in 0..n_out_bins {

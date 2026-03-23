@@ -70,10 +70,12 @@ impl Default for ClassificationResult {
     }
 }
 
+type OnnxModel = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
+
 /// Acoustic target classifier backed by an ONNX model (via tract).
 pub struct AcousticClassifier {
     config: ClassifierConfig,
-    model: Option<SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>>,
+    model: Option<OnnxModel>,
     classes: Vec<String>,
 }
 

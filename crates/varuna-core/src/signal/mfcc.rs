@@ -1,6 +1,6 @@
 //! Mel-Frequency Cepstral Coefficients (MFCC) extractor.
 use crate::fft::stft::hann_window;
-use ndarray::{Array1, Array2};
+use ndarray::Array2;
 use realfft::RealFftPlanner;
 
 /// MFCC extractor.
