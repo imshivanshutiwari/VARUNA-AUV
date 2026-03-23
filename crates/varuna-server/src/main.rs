@@ -1,13 +1,13 @@
 //! VARUNA-AUV Naval Operations Center – main entry point.
+use axum::{routing::get, Router};
 use std::net::SocketAddr;
-use axum::{Router, routing::get};
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
-use tower_http::cors::{CorsLayer, Any};
 use tracing_subscriber::EnvFilter;
 
 mod routes;
-mod websocket;
 mod state;
+mod websocket;
 
 use state::AppState;
 
@@ -21,17 +21,25 @@ async fn main() -> anyhow::Result<()> {
     let static_dir = std::env::current_dir()?.join("crates/varuna-server/static");
 
     let app = Router::new()
-        .route("/api/status",    get(routes::status_handler))
-        .route("/api/spectrum",  get(routes::spectrum_handler))
-        .route("/api/lofar",     get(routes::lofar_handler))
-        .route("/api/demon",     get(routes::demon_handler))
-        .route("/api/mfcc",      get(routes::mfcc_handler))
-        .route("/api/classify",  get(routes::classify_handler))
-        .route("/api/tracks",    get(routes::tracks_handler))
-        .route("/api/beamform",  get(routes::beamform_handler))
-        .route("/ws",            get(websocket::ws_handler))
-        .nest_service("/", ServeDir::new(&static_dir).append_index_html_on_directories(true))
-        .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any))
+        .route("/api/status", get(routes::status_handler))
+        .route("/api/spectrum", get(routes::spectrum_handler))
+        .route("/api/lofar", get(routes::lofar_handler))
+        .route("/api/demon", get(routes::demon_handler))
+        .route("/api/mfcc", get(routes::mfcc_handler))
+        .route("/api/classify", get(routes::classify_handler))
+        .route("/api/tracks", get(routes::tracks_handler))
+        .route("/api/beamform", get(routes::beamform_handler))
+        .route("/ws", get(websocket::ws_handler))
+        .nest_service(
+            "/",
+            ServeDir::new(&static_dir).append_index_html_on_directories(true),
+        )
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(Any),
+        )
         .with_state(state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

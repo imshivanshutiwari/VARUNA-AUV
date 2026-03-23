@@ -12,6 +12,7 @@ Usage:
     python generate_onnx_model.py [--out models/acoustic_classifier.onnx]
 """
 import argparse
+import importlib.util
 import os
 import numpy as np
 
@@ -20,11 +21,9 @@ def main():
     parser.add_argument('--out', default='../models/acoustic_classifier.onnx')
     args = parser.parse_args()
 
-    try:
-        import torch
-        import torch.nn as nn
+    if importlib.util.find_spec('torch') is not None:
         _generate_with_torch(args.out)
-    except ImportError:
+    else:
         print("PyTorch not available, generating minimal ONNX via onnx library.")
         _generate_minimal_onnx(args.out)
 
@@ -82,9 +81,9 @@ def _generate_with_torch(out_path: str):
         dynamic_axes={'input': {0: 'batch_size'}, 'logits': {0: 'batch_size'}},
     )
     print(f"ONNX model saved to: {out_path}")
-    print(f"  Input  shape: [1, 120, 128]")
-    print(f"  Output shape: [1, 7]")
-    print(f"  Classes: Cargo, Tanker, Tug, Passengership, Submarine, Biological, Unknown")
+    print("  Input  shape: [1, 120, 128]")
+    print("  Output shape: [1, 7]")
+    print("  Classes: Cargo, Tanker, Tug, Passengership, Submarine, Biological, Unknown")
 
 def _generate_minimal_onnx(out_path: str):
     """Generate a minimal ONNX model using only the onnx library."""

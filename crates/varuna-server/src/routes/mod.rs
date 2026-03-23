@@ -1,7 +1,7 @@
 //! HTTP route handlers.
+use crate::state::AppState;
 use axum::{extract::State, Json};
 use serde_json::{json, Value};
-use crate::state::AppState;
 
 /// GET /api/status
 pub async fn status_handler() -> Json<Value> {

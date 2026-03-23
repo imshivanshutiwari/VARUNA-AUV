@@ -1,6 +1,6 @@
 //! Acoustic fingerprinting using spectrogram peak hashing (Shazam-style).
-use std::collections::HashMap;
 use ndarray::Array2;
+use std::collections::HashMap;
 
 /// A single acoustic fingerprint hash.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -49,9 +49,12 @@ impl AcousticFingerprinter {
         for t in 1..n_frames.saturating_sub(1) {
             for f in 1..n_bins.saturating_sub(1) {
                 let val = spectrogram[[t, f]];
-                if val < self.peak_threshold_db { continue; }
+                if val < self.peak_threshold_db {
+                    continue;
+                }
                 // Local maximum in 3x3 neighbourhood
-                let is_peak = (-1i32..=1).flat_map(|dt| (-1i32..=1).map(move |df| (dt, df)))
+                let is_peak = (-1i32..=1)
+                    .flat_map(|dt| (-1i32..=1).map(move |df| (dt, df)))
                     .filter(|&(dt, df)| dt != 0 || df != 0)
                     .all(|(dt, df)| {
                         let tt = (t as i32 + dt) as usize;
@@ -77,7 +80,11 @@ impl AcousticFingerprinter {
                 .collect();
             for &(t2, f2) in &partners {
                 hashes.push((
-                    FingerprintHash { freq1: f1, freq2: *f2, delta_frames: t2 - t1 },
+                    FingerprintHash {
+                        freq1: f1,
+                        freq2: *f2,
+                        delta_frames: t2 - t1,
+                    },
                     t1,
                 ));
             }
@@ -90,7 +97,10 @@ impl AcousticFingerprinter {
         let peaks = self.extract_peaks(spectrogram);
         let hashes = self.generate_hashes(&peaks);
         for (hash, t) in hashes {
-            self.db.entry(hash).or_default().push((track_id.to_string(), t));
+            self.db
+                .entry(hash)
+                .or_default()
+                .push((track_id.to_string(), t));
         }
     }
 
@@ -113,9 +123,7 @@ impl AcousticFingerprinter {
             return None;
         }
         let total_hashes = hashes.len().max(1) as f32;
-        let ((track_id, offset), count) = score_map
-            .into_iter()
-            .max_by_key(|(_, c)| *c)?;
+        let ((track_id, offset), count) = score_map.into_iter().max_by_key(|(_, c)| *c)?;
         Some(FingerprintMatch {
             track_id,
             score: count as f32 / total_hashes,
@@ -132,7 +140,12 @@ impl AcousticFingerprinter {
 mod tests {
     use super::*;
 
-    fn make_spectrogram(n_frames: usize, n_bins: usize, peak_t: usize, peak_f: usize) -> Array2<f32> {
+    fn make_spectrogram(
+        n_frames: usize,
+        n_bins: usize,
+        peak_t: usize,
+        peak_f: usize,
+    ) -> Array2<f32> {
         let mut spec = Array2::<f32>::zeros((n_frames, n_bins));
         // Background noise
         for t in 0..n_frames {

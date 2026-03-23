@@ -1,7 +1,7 @@
 //! Mel-Frequency Cepstral Coefficients (MFCC) extractor.
+use crate::fft::stft::hann_window;
 use ndarray::{Array1, Array2};
 use realfft::RealFftPlanner;
-use crate::fft::stft::hann_window;
 
 /// MFCC extractor.
 pub struct MfccExtractor {
@@ -27,7 +27,16 @@ impl MfccExtractor {
     ) -> Self {
         let n_bins = window_size / 2 + 1;
         let mel_filterbank = build_mel_filterbank(n_mels, n_bins, sample_rate, fmin, fmax);
-        Self { n_mfcc, n_mels, sample_rate, fmin, fmax, window_size, hop_size, mel_filterbank }
+        Self {
+            n_mfcc,
+            n_mels,
+            sample_rate,
+            fmin,
+            fmax,
+            window_size,
+            hop_size,
+            mel_filterbank,
+        }
     }
 
     /// Extract MFCC feature matrix of shape (n_frames, n_mfcc).
@@ -44,7 +53,10 @@ impl MfccExtractor {
         for frame_idx in 0..n_frames {
             let start = frame_idx * self.hop_size;
             let mut frame: Vec<f32> = signal[start..start + self.window_size]
-                .iter().zip(window.iter()).map(|(&s, &w)| s * w).collect();
+                .iter()
+                .zip(window.iter())
+                .map(|(&s, &w)| s * w)
+                .collect();
             let mut spectrum = fft.make_output_vec();
             fft.process(&mut frame, &mut spectrum).expect("FFT");
 
@@ -52,10 +64,16 @@ impl MfccExtractor {
             let power: Vec<f32> = spectrum.iter().map(|c| c.norm_sqr()).collect();
 
             // Apply mel filterbank → log energy
-            let mel_energy: Vec<f32> = self.mel_filterbank.iter()
+            let mel_energy: Vec<f32> = self
+                .mel_filterbank
+                .iter()
                 .map(|filt| {
                     let e: f32 = filt.iter().zip(power.iter()).map(|(&f, &p)| f * p).sum();
-                    if e > 1e-20 { e.ln() } else { -46.0 }
+                    if e > 1e-20 {
+                        e.ln()
+                    } else {
+                        -46.0
+                    }
                 })
                 .collect();
 
@@ -83,7 +101,8 @@ fn build_mel_filterbank(
         .map(|i| mel_min + (mel_max - mel_min) * i as f32 / (n_mels + 1) as f32)
         .collect();
     let freq_points: Vec<f32> = mel_points.iter().map(|&m| mel_to_hz(m)).collect();
-    let bin_points: Vec<f32> = freq_points.iter()
+    let bin_points: Vec<f32> = freq_points
+        .iter()
         .map(|&f| (f / (sample_rate / 2.0)) * n_bins as f32)
         .collect();
 
@@ -122,10 +141,17 @@ fn dct2(input: &[f32], n_out: usize) -> Vec<f32> {
     let pi = std::f32::consts::PI;
     (0..n_out.min(n))
         .map(|k| {
-            let scale = if k == 0 { (1.0 / n as f32).sqrt() } else { (2.0 / n as f32).sqrt() };
-            scale * input.iter().enumerate()
-                .map(|(i, &x)| x * (pi * k as f32 * (2 * i + 1) as f32 / (2 * n) as f32).cos())
-                .sum::<f32>()
+            let scale = if k == 0 {
+                (1.0 / n as f32).sqrt()
+            } else {
+                (2.0 / n as f32).sqrt()
+            };
+            scale
+                * input
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &x)| x * (pi * k as f32 * (2 * i + 1) as f32 / (2 * n) as f32).cos())
+                    .sum::<f32>()
         })
         .collect()
 }

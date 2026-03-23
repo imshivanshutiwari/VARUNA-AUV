@@ -30,7 +30,13 @@ impl MvdrBeamformer {
         diagonal_loading: f32,
         angle_resolution_deg: f32,
     ) -> Self {
-        Self { n_elements, element_spacing_m, sound_speed_mps, diagonal_loading, angle_resolution_deg }
+        Self {
+            n_elements,
+            element_spacing_m,
+            sound_speed_mps,
+            diagonal_loading,
+            angle_resolution_deg,
+        }
     }
 
     /// Compute beam pattern from a covariance-like matrix (n_elements × n_elements).
@@ -41,7 +47,11 @@ impl MvdrBeamformer {
         let n_snap = signal_matrix.len();
         let n_elem = self.n_elements;
         if n_snap < 2 || signal_matrix[0].len() < n_elem {
-            return BeamPattern { angles_deg: vec![], power_db: vec![], doa_deg: 0.0 };
+            return BeamPattern {
+                angles_deg: vec![],
+                power_db: vec![],
+                doa_deg: 0.0,
+            };
         }
 
         // Build real sample covariance matrix R = (1/N) * X^H * X
@@ -76,25 +86,40 @@ impl MvdrBeamformer {
             let theta_rad = theta_deg * PI / 180.0;
             // Real-valued steering vector for ULA
             let sv: DVector<f64> = DVector::from_fn(n_elem, |i, _| {
-                let tau = i as f32 * self.element_spacing_m * theta_rad.sin() / self.sound_speed_mps;
+                let tau =
+                    i as f32 * self.element_spacing_m * theta_rad.sin() / self.sound_speed_mps;
                 (2.0 * PI * 1000.0 * tau).cos() as f64 // 1kHz reference
             });
             // MVDR weight: w = R^{-1} a / (a^H R^{-1} a)
             let r_inv_sv = &r_inv * &sv;
             let denom = sv.dot(&r_inv_sv);
-            let power = if denom.abs() > 1e-30 { 1.0 / denom } else { 0.0 };
-            let power_db = if power > 1e-30 { 10.0 * power.abs().log10() as f32 } else { -100.0f32 };
+            let power = if denom.abs() > 1e-30 {
+                1.0 / denom
+            } else {
+                0.0
+            };
+            let power_db = if power > 1e-30 {
+                10.0 * power.abs().log10() as f32
+            } else {
+                -100.0f32
+            };
             angles.push(theta_deg);
             powers.push(power_db);
         }
 
-        let doa_idx = powers.iter().enumerate()
+        let doa_idx = powers
+            .iter()
+            .enumerate()
             .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
             .map(|(i, _)| i)
             .unwrap_or(0);
         let doa_deg = angles[doa_idx];
 
-        BeamPattern { angles_deg: angles, power_db: powers, doa_deg }
+        BeamPattern {
+            angles_deg: angles,
+            power_db: powers,
+            doa_deg,
+        }
     }
 }
 
@@ -110,10 +135,12 @@ mod tests {
         let theta = 30.0f32 * PI / 180.0;
         let snapshots: Vec<Vec<f32>> = (0..n_snap)
             .map(|_| {
-                (0..8).map(|i| {
-                    let tau = i as f32 * 0.037 * theta.sin() / 1500.0;
-                    (2.0 * PI * 1000.0 * tau).cos()
-                }).collect()
+                (0..8)
+                    .map(|i| {
+                        let tau = i as f32 * 0.037 * theta.sin() / 1500.0;
+                        (2.0 * PI * 1000.0 * tau).cos()
+                    })
+                    .collect()
             })
             .collect();
         let pattern = bf.compute(&snapshots);

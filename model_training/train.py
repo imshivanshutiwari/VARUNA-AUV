@@ -104,7 +104,7 @@ def train(args):
     val_dl = DataLoader(val_ds, batch_size=args.batch, shuffle=False, num_workers=0)
 
     # ── Model ─────────────────────────────────────────────────────
-    import importlib.util, sys as _sys
+    import importlib.util
     spec = importlib.util.spec_from_file_location(
         'generate_onnx_model',
         os.path.join(os.path.dirname(__file__), 'generate_onnx_model.py'),

@@ -1,5 +1,5 @@
 //! WAV file reading with automatic mono downmix and resampling stubs.
-use hound::{WavSpec, SampleFormat};
+use hound::{SampleFormat, WavSpec};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -27,7 +27,11 @@ impl AudioBuffer {
     /// Create from raw f32 samples.
     pub fn new(sample_rate: u32, samples: Vec<f32>) -> Self {
         let duration_s = samples.len() as f32 / sample_rate as f32;
-        Self { sample_rate, samples, duration_s }
+        Self {
+            sample_rate,
+            samples,
+            duration_s,
+        }
     }
 }
 
@@ -45,9 +49,7 @@ impl WavReader {
         let n_channels = spec.channels as usize;
 
         let samples: Vec<f32> = match spec.sample_format {
-            SampleFormat::Float => {
-                reader.samples::<f32>().collect::<Result<Vec<_>, _>>()?
-            }
+            SampleFormat::Float => reader.samples::<f32>().collect::<Result<Vec<_>, _>>()?,
             SampleFormat::Int => {
                 let max_val = (1i64 << (spec.bits_per_sample - 1)) as f32;
                 reader
@@ -89,17 +91,10 @@ impl WavReader {
     }
 
     /// Generate a synthetic sinusoidal AudioBuffer for testing.
-    pub fn synthetic_sine(
-        freq_hz: f32,
-        duration_s: f32,
-        sample_rate: u32,
-    ) -> AudioBuffer {
+    pub fn synthetic_sine(freq_hz: f32, duration_s: f32, sample_rate: u32) -> AudioBuffer {
         let n = (duration_s * sample_rate as f32) as usize;
         let samples: Vec<f32> = (0..n)
-            .map(|i| {
-                (2.0 * std::f32::consts::PI * freq_hz * i as f32 / sample_rate as f32)
-                    .sin()
-            })
+            .map(|i| (2.0 * std::f32::consts::PI * freq_hz * i as f32 / sample_rate as f32).sin())
             .collect();
         AudioBuffer::new(sample_rate, samples)
     }
@@ -119,7 +114,11 @@ mod tests {
     #[test]
     fn test_synthetic_sine_amplitude() {
         let buf = WavReader::synthetic_sine(440.0, 1.0, 44100);
-        let max_amp = buf.samples.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
+        let max_amp = buf
+            .samples
+            .iter()
+            .cloned()
+            .fold(f32::NEG_INFINITY, f32::max);
         let min_amp = buf.samples.iter().cloned().fold(f32::INFINITY, f32::min);
         assert!(max_amp <= 1.0 + 1e-5);
         assert!(min_amp >= -1.0 - 1e-5);

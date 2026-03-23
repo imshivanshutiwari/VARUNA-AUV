@@ -17,8 +17,8 @@ impl DatasetInfo {
     pub fn shipsear() -> Self {
         Self {
             name: "ShipsEar".to_string(),
-            description:
-                "90 underwater noise recordings of 11 vessel categories at sea.".to_string(),
+            description: "90 underwater noise recordings of 11 vessel categories at sea."
+                .to_string(),
             classes: vec![
                 "Background".to_string(),
                 "Dinghy".to_string(),
@@ -60,14 +60,22 @@ impl DatasetInfo {
 /// Print ShipsEar dataset metadata (stub – real fetch requires manual download).
 pub fn fetch_shipsear_stub() -> DatasetInfo {
     let info = DatasetInfo::shipsear();
-    tracing::info!("ShipsEar dataset: {} classes, {} samples", info.classes.len(), info.n_samples);
+    tracing::info!(
+        "ShipsEar dataset: {} classes, {} samples",
+        info.classes.len(),
+        info.n_samples
+    );
     info
 }
 
 /// Print DeepShip dataset metadata (stub – real fetch requires manual download).
 pub fn fetch_deepship_stub() -> DatasetInfo {
     let info = DatasetInfo::deepship();
-    tracing::info!("DeepShip dataset: {} classes, {} samples", info.classes.len(), info.n_samples);
+    tracing::info!(
+        "DeepShip dataset: {} classes, {} samples",
+        info.classes.len(),
+        info.n_samples
+    );
     info
 }
 

@@ -1,7 +1,7 @@
 //! LOFARgram – Low-Frequency Analysis and Recording spectral display.
+use crate::fft::stft::hann_window;
 use ndarray::Array2;
 use realfft::RealFftPlanner;
-use crate::fft::stft::hann_window;
 
 /// LOFARgram processor: narrow-band low-frequency spectrogram.
 pub struct Lofargram {
@@ -24,7 +24,14 @@ impl Lofargram {
     ) -> Self {
         let frame_duration_s = hop_size as f32 / sample_rate;
         let integration_frames = (integration_time_s / frame_duration_s).max(1.0) as usize;
-        Self { window_size, hop_size, sample_rate, freq_min_hz, freq_max_hz, integration_frames }
+        Self {
+            window_size,
+            hop_size,
+            sample_rate,
+            freq_min_hz,
+            freq_max_hz,
+            integration_frames,
+        }
     }
 
     /// Compute LOFARgram: returns (n_slices, n_freq_bins) power matrix in dB.
@@ -40,18 +47,27 @@ impl Lofargram {
         let bin_low = ((self.freq_min_hz / self.sample_rate) * self.window_size as f32) as usize;
         let bin_high = (((self.freq_max_hz / self.sample_rate) * self.window_size as f32) as usize)
             .min(n_bins_total - 1);
-        let n_out_bins = if bin_high > bin_low { bin_high - bin_low } else { 1 };
+        let n_out_bins = if bin_high > bin_low {
+            bin_high - bin_low
+        } else {
+            1
+        };
 
         // Collect all FFT frames
         let mut all_power: Vec<Vec<f32>> = Vec::new();
         let mut start = 0;
         while start + self.window_size <= signal.len() {
             let mut frame: Vec<f32> = signal[start..start + self.window_size]
-                .iter().zip(window.iter()).map(|(&s, &w)| s * w).collect();
+                .iter()
+                .zip(window.iter())
+                .map(|(&s, &w)| s * w)
+                .collect();
             let mut spectrum = fft.make_output_vec();
             fft.process(&mut frame, &mut spectrum).expect("FFT");
-            let power: Vec<f32> = spectrum[bin_low..=bin_high.min(spectrum.len()-1)]
-                .iter().map(|c| c.norm_sqr()).collect();
+            let power: Vec<f32> = spectrum[bin_low..=bin_high.min(spectrum.len() - 1)]
+                .iter()
+                .map(|c| c.norm_sqr())
+                .collect();
             all_power.push(power);
             start += self.hop_size;
         }
@@ -66,7 +82,11 @@ impl Lofargram {
             for bin in 0..n_out_bins {
                 let sum: f32 = chunk.iter().filter_map(|f| f.get(bin)).sum();
                 let avg = sum / chunk.len() as f32;
-                out[[slice_idx, bin]] = if avg > 1e-20 { 10.0 * avg.log10() } else { -200.0 };
+                out[[slice_idx, bin]] = if avg > 1e-20 {
+                    10.0 * avg.log10()
+                } else {
+                    -200.0
+                };
             }
         }
         out

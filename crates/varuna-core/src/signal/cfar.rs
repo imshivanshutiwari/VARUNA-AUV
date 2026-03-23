@@ -27,7 +27,11 @@ pub struct CfarDetector {
 
 impl CfarDetector {
     pub fn new(guard_cells: usize, training_cells: usize, pfa: f32) -> Self {
-        Self { guard_cells, training_cells, pfa }
+        Self {
+            guard_cells,
+            training_cells,
+            pfa,
+        }
     }
 
     /// CFAR threshold multiplier α = N * (PFA^{-1/N} - 1) where N = 2*training_cells.
@@ -38,11 +42,7 @@ impl CfarDetector {
 
     /// Detect peaks in `spectrum_db` using CA-CFAR.
     /// `freq_axis_hz`: frequency corresponding to each bin.
-    pub fn detect(
-        &self,
-        spectrum_db: &[f32],
-        freq_axis_hz: &[f32],
-    ) -> Vec<CfarDetection> {
+    pub fn detect(&self, spectrum_db: &[f32], freq_axis_hz: &[f32]) -> Vec<CfarDetection> {
         let n = spectrum_db.len();
         let window = self.guard_cells + self.training_cells;
         let alpha = self.threshold_multiplier();
@@ -65,7 +65,11 @@ impl CfarDetector {
             let noise_est: f32 = all_training.iter().sum::<f32>() / all_training.len() as f32;
             let threshold = noise_est + 10.0 * (alpha + 1.0).log10();
             if spectrum_db[i] > threshold {
-                let freq = if i < freq_axis_hz.len() { freq_axis_hz[i] } else { i as f32 };
+                let freq = if i < freq_axis_hz.len() {
+                    freq_axis_hz[i]
+                } else {
+                    i as f32
+                };
                 detections.push(CfarDetection {
                     bin_index: i,
                     frequency_hz: freq,

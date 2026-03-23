@@ -1,7 +1,7 @@
 //! Short-Time Fourier Transform (STFT) using realfft.
-use std::f32::consts::PI;
 use ndarray::Array2;
 use realfft::RealFftPlanner;
+use std::f32::consts::PI;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -20,7 +20,11 @@ pub struct Stft {
 impl Stft {
     pub fn new(window_size: usize, hop_size: usize) -> Self {
         let window = hann_window(window_size);
-        Self { window_size, hop_size, window }
+        Self {
+            window_size,
+            hop_size,
+            window,
+        }
     }
 
     /// Number of real-FFT output bins.
@@ -32,7 +36,9 @@ impl Stft {
     /// Returns Array2 of shape (n_frames, n_bins).
     pub fn magnitude_db(&self, signal: &[f32]) -> Result<Array2<f32>, StftError> {
         if signal.len() < self.window_size {
-            return Err(StftError::SignalTooShort { window_size: self.window_size });
+            return Err(StftError::SignalTooShort {
+                window_size: self.window_size,
+            });
         }
         let mut planner = RealFftPlanner::<f32>::new();
         let fft = planner.plan_fft_forward(self.window_size);
@@ -48,11 +54,14 @@ impl Stft {
                 .map(|(&s, &w)| s * w)
                 .collect();
             let mut spectrum = fft.make_output_vec();
-            fft.process(&mut frame, &mut spectrum)
-                .expect("FFT failed");
+            fft.process(&mut frame, &mut spectrum).expect("FFT failed");
             for (j, c) in spectrum.iter().enumerate() {
                 let mag = c.norm();
-                row[j] = if mag > 1e-10 { 20.0 * mag.log10() } else { -100.0 };
+                row[j] = if mag > 1e-10 {
+                    20.0 * mag.log10()
+                } else {
+                    -100.0
+                };
             }
         }
         Ok(out)
@@ -61,7 +70,9 @@ impl Stft {
     /// Compute power spectrogram (linear).
     pub fn power(&self, signal: &[f32]) -> Result<Array2<f32>, StftError> {
         if signal.len() < self.window_size {
-            return Err(StftError::SignalTooShort { window_size: self.window_size });
+            return Err(StftError::SignalTooShort {
+                window_size: self.window_size,
+            });
         }
         let mut planner = RealFftPlanner::<f32>::new();
         let fft = planner.plan_fft_forward(self.window_size);
@@ -77,8 +88,7 @@ impl Stft {
                 .map(|(&s, &w)| s * w)
                 .collect();
             let mut spectrum = fft.make_output_vec();
-            fft.process(&mut frame, &mut spectrum)
-                .expect("FFT failed");
+            fft.process(&mut frame, &mut spectrum).expect("FFT failed");
             for (j, c) in spectrum.iter().enumerate() {
                 row[j] = c.norm_sqr();
             }
@@ -122,7 +132,12 @@ mod tests {
         let spec = stft.power(&signal).unwrap();
         // Bin 0 should be largest
         let row = spec.row(0);
-        let max_bin = row.iter().enumerate().max_by(|a, b| a.1.partial_cmp(b.1).unwrap()).unwrap().0;
+        let max_bin = row
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+            .unwrap()
+            .0;
         assert_eq!(max_bin, 0);
     }
 }

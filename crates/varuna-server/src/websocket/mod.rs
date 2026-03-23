@@ -1,17 +1,14 @@
 //! WebSocket handler for real-time sonar data streaming.
+use crate::state::AppState;
+use axum::extract::ws::{Message, WebSocket};
 use axum::{
     extract::{State, WebSocketUpgrade},
     response::IntoResponse,
 };
-use axum::extract::ws::{WebSocket, Message};
 use futures::{SinkExt, StreamExt};
-use crate::state::AppState;
 
 /// GET /ws – upgrades to a WebSocket connection.
-pub async fn ws_handler(
-    ws: WebSocketUpgrade,
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 

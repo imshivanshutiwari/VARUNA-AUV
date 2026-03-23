@@ -1,7 +1,7 @@
 //! Welch's method for Power Spectral Density estimation.
+use super::stft::hann_window;
 use ndarray::Array1;
 use realfft::RealFftPlanner;
-use super::stft::hann_window;
 
 /// Welch PSD estimator.
 pub struct WelchPsd {
@@ -12,7 +12,11 @@ pub struct WelchPsd {
 
 impl WelchPsd {
     pub fn new(window_size: usize, hop_size: usize, sample_rate: f32) -> Self {
-        Self { window_size, hop_size, sample_rate }
+        Self {
+            window_size,
+            hop_size,
+            sample_rate,
+        }
     }
 
     /// Compute Welch PSD.
@@ -54,7 +58,11 @@ impl WelchPsd {
             .iter()
             .map(|&p| {
                 let linear = p * scale;
-                if linear > 1e-20 { 10.0 * linear.log10() } else { -200.0 }
+                if linear > 1e-20 {
+                    10.0 * linear.log10()
+                } else {
+                    -200.0
+                }
             })
             .collect();
         (freqs, psd)
@@ -76,12 +84,18 @@ mod tests {
             .collect();
         let welch = WelchPsd::new(1024, 512, sr);
         let (freqs, psd) = welch.compute(&signal);
-        let peak_idx = psd.iter().enumerate().max_by(|a, b| a.1.partial_cmp(b.1).unwrap()).unwrap().0;
+        let peak_idx = psd
+            .iter()
+            .enumerate()
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
+            .unwrap()
+            .0;
         let peak_freq = freqs[peak_idx];
         assert!(
             (peak_freq - freq).abs() < 100.0,
             "Peak at {}Hz, expected ~{}Hz",
-            peak_freq, freq
+            peak_freq,
+            freq
         );
     }
 }

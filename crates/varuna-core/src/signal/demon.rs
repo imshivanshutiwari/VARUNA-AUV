@@ -1,7 +1,7 @@
 //! DEMON (Detection of Envelope Modulations ON Noise) processor.
 //! Demodulates propeller cavitation noise to extract blade-rate frequency.
-use realfft::RealFftPlanner;
 use crate::fft::stft::hann_window;
+use realfft::RealFftPlanner;
 
 /// DEMON spectrum result.
 #[derive(Debug, Clone)]
@@ -31,13 +31,24 @@ impl DemonProcessor {
         sample_rate: f32,
     ) -> Self {
         let demon_window_size = 2048usize;
-        Self { band_low_hz, band_high_hz, envelope_lpf_hz, sample_rate, demon_window_size }
+        Self {
+            band_low_hz,
+            band_high_hz,
+            envelope_lpf_hz,
+            sample_rate,
+            demon_window_size,
+        }
     }
 
     /// Compute DEMON spectrum from a raw acoustic signal.
     pub fn compute(&self, signal: &[f32]) -> DemonSpectrum {
         // 1. Bandpass filter the signal into the cavitation band
-        let filtered = bandpass_approx(signal, self.band_low_hz, self.band_high_hz, self.sample_rate);
+        let filtered = bandpass_approx(
+            signal,
+            self.band_low_hz,
+            self.band_high_hz,
+            self.sample_rate,
+        );
         // 2. Compute envelope (full-wave rectification)
         let envelope: Vec<f32> = filtered.iter().map(|&x| x.abs()).collect();
         // 3. Lowpass filter the envelope
@@ -53,7 +64,10 @@ impl DemonProcessor {
         }
         let window = hann_window(n);
         let mut frame: Vec<f32> = lp_envelope[..n]
-            .iter().zip(window.iter()).map(|(&s, &w)| s * w).collect();
+            .iter()
+            .zip(window.iter())
+            .map(|(&s, &w)| s * w)
+            .collect();
         let mut planner = RealFftPlanner::<f32>::new();
         let fft = planner.plan_fft_forward(n);
         let mut spectrum = fft.make_output_vec();
@@ -65,14 +79,24 @@ impl DemonProcessor {
         let freqs: Vec<f32> = (0..n_bins)
             .map(|k| k as f32 * demon_sr / n as f32)
             .collect();
-        let power_db: Vec<f32> = spectrum.iter()
+        let power_db: Vec<f32> = spectrum
+            .iter()
             .take(n_bins)
-            .map(|c| { let p = c.norm_sqr(); if p > 1e-20 { 10.0 * p.log10() } else { -200.0 } })
+            .map(|c| {
+                let p = c.norm_sqr();
+                if p > 1e-20 {
+                    10.0 * p.log10()
+                } else {
+                    -200.0
+                }
+            })
             .collect();
 
         // Skip DC bin (index 0) when finding blade rate
         let blade_rate_hz = if power_db.len() > 1 {
-            let peak_idx = power_db[1..].iter().enumerate()
+            let peak_idx = power_db[1..]
+                .iter()
+                .enumerate()
                 .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
                 .map(|(i, _)| i + 1)
                 .unwrap_or(0);
@@ -81,7 +105,11 @@ impl DemonProcessor {
             0.0
         };
 
-        DemonSpectrum { frequencies_hz: freqs, power_db, blade_rate_hz }
+        DemonSpectrum {
+            frequencies_hz: freqs,
+            power_db,
+            blade_rate_hz,
+        }
     }
 }
 
@@ -89,8 +117,12 @@ impl DemonProcessor {
 fn bandpass_approx(signal: &[f32], low: f32, high: f32, sr: f32) -> Vec<f32> {
     // Simple difference of lowpass filters as bandpass approximation
     let lp_high = lowpass_approx(signal, high, sr);
-    let lp_low  = lowpass_approx(signal, low, sr);
-    lp_high.iter().zip(lp_low.iter()).map(|(&h, &l)| h - l).collect()
+    let lp_low = lowpass_approx(signal, low, sr);
+    lp_high
+        .iter()
+        .zip(lp_low.iter())
+        .map(|(&h, &l)| h - l)
+        .collect()
 }
 
 /// Exponential moving-average lowpass filter.
@@ -122,8 +154,7 @@ mod tests {
         let signal: Vec<f32> = (0..n)
             .map(|i| {
                 let t = i as f32 / sr;
-                (1.0 + 0.5 * (2.0 * PI * blade_rate * t).sin())
-                    * (2.0 * PI * carrier * t).sin()
+                (1.0 + 0.5 * (2.0 * PI * blade_rate * t).sin()) * (2.0 * PI * carrier * t).sin()
             })
             .collect();
         let demon = DemonProcessor::new(2000.0, 10000.0, 100.0, sr);

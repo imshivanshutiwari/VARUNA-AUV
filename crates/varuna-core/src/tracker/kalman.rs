@@ -1,5 +1,5 @@
 //! Kalman filter-based target tracker for bearing/range/depth estimates.
-use nalgebra::{Matrix4, Matrix2x4, Matrix4x2, Vector4, Vector2, Matrix2};
+use nalgebra::{Matrix2, Matrix2x4, Matrix4, Matrix4x2, Vector2, Vector4};
 
 /// State vector: [bearing_deg, bearing_rate, range_m, range_rate].
 pub type State = Vector4<f32>;
@@ -61,24 +61,30 @@ impl KalmanTracker {
 
         // State transition: constant velocity model
         let f_mat = Matrix4::new(
-            1.0, dt, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, dt,
-            0.0, 0.0, 0.0, 1.0,
+            1.0, dt, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, dt, 0.0, 0.0, 0.0, 1.0,
         );
 
         // Measurement matrix: observe bearing and range
-        let h_mat = Matrix2x4::new(
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-        );
+        let h_mat = Matrix2x4::new(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 
         // Process noise covariance
         let q_mat = Matrix4::new(
-            q * dt * dt, 0.0, 0.0, 0.0,
-            0.0, q, 0.0, 0.0,
-            0.0, 0.0, q * dt * dt, 0.0,
-            0.0, 0.0, 0.0, q,
+            q * dt * dt,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            q,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            q * dt * dt,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            q,
         );
 
         // Measurement noise covariance
@@ -100,7 +106,8 @@ impl KalmanTracker {
         // Predict all tracks
         for track in &mut self.tracks {
             track.state = &self.f_mat * &track.state;
-            track.covariance = &self.f_mat * &track.covariance * self.f_mat.transpose() + &self.q_mat;
+            track.covariance =
+                &self.f_mat * &track.covariance * self.f_mat.transpose() + &self.q_mat;
         }
 
         let mut assigned = vec![false; measurements.len()];
@@ -109,7 +116,9 @@ impl KalmanTracker {
             let mut best_meas = None;
             let mut best_dist = f32::MAX;
             for (j, &(bearing, range)) in measurements.iter().enumerate() {
-                if assigned[j] { continue; }
+                if assigned[j] {
+                    continue;
+                }
                 let z = Vector2::new(bearing, range);
                 let z_pred = &self.h_mat * &track.state;
                 let innov = z - z_pred;
@@ -163,7 +172,8 @@ impl KalmanTracker {
         }
 
         // Prune coasted tracks
-        self.tracks.retain(|t| t.coasting_frames <= self.config.max_coasting);
+        self.tracks
+            .retain(|t| t.coasting_frames <= self.config.max_coasting);
 
         &self.tracks
     }
@@ -188,7 +198,10 @@ mod tests {
 
     #[test]
     fn test_tracker_prunes_coasted_tracks() {
-        let config = KalmanConfig { max_coasting: 2, ..Default::default() };
+        let config = KalmanConfig {
+            max_coasting: 2,
+            ..Default::default()
+        };
         let mut tracker = KalmanTracker::new(config);
         // Init with measurement
         tracker.update(&[(45.0, 1000.0)]);

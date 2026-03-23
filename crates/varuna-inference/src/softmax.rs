@@ -2,7 +2,9 @@
 
 /// Compute softmax of a slice.
 pub fn softmax(logits: &[f32]) -> Vec<f32> {
-    if logits.is_empty() { return Vec::new(); }
+    if logits.is_empty() {
+        return Vec::new();
+    }
     let max = logits.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
     let exps: Vec<f32> = logits.iter().map(|&x| (x - max).exp()).collect();
     let sum: f32 = exps.iter().sum();
@@ -11,7 +13,9 @@ pub fn softmax(logits: &[f32]) -> Vec<f32> {
 
 /// Return index and value of maximum element.
 pub fn argmax(probs: &[f32]) -> (usize, f32) {
-    probs.iter().enumerate()
+    probs
+        .iter()
+        .enumerate()
         .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
         .map(|(i, &v)| (i, v))
         .unwrap_or((0, 0.0))

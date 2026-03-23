@@ -1,6 +1,6 @@
 //! varuna-data – audio file I/O and dataset fetching utilities.
-pub mod wav;
 pub mod dataset;
+pub mod wav;
 
-pub use wav::{WavReader, AudioBuffer};
-pub use dataset::{DatasetInfo, fetch_shipsear_stub, fetch_deepship_stub};
+pub use dataset::{fetch_deepship_stub, fetch_shipsear_stub, DatasetInfo};
+pub use wav::{AudioBuffer, WavReader};

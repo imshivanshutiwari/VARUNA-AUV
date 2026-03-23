@@ -1,9 +1,9 @@
 //! Shared application state.
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use varuna_core::{Stft, Lofargram, DemonProcessor, MfccExtractor, MvdrBeamformer, CfarDetector};
+use varuna_core::{CfarDetector, DemonProcessor, Lofargram, MfccExtractor, MvdrBeamformer, Stft};
 use varuna_inference::{AcousticClassifier, ClassifierConfig};
-use serde::{Deserialize, Serialize};
 
 /// Live sonar / tracking data broadcast to WebSocket clients.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -74,7 +74,10 @@ impl AppState {
             });
         }
 
-        Ok(Self { sonar_frame, classifier })
+        Ok(Self {
+            sonar_frame,
+            classifier,
+        })
     }
 
     fn generate_demo_frame(clf: &AcousticClassifier) -> SonarFrame {
@@ -92,9 +95,10 @@ impl AppState {
             .map(|i| {
                 let ti = i as f32 / sr;
                 0.5 * (2.0 * PI * 100.0 * ti).sin()
-                + 0.3 * (2.0 * PI * 250.0 * (ti + t * 0.1)).sin()
-                + 0.2 * (2.0 * PI * 500.0 * ti).sin()
-                + 0.1 * ((tick * 1234 + i as u64) % 256) as f32 / 128.0 - 0.1
+                    + 0.3 * (2.0 * PI * 250.0 * (ti + t * 0.1)).sin()
+                    + 0.2 * (2.0 * PI * 500.0 * ti).sin()
+                    + 0.1 * ((tick * 1234 + i as u64) % 256) as f32 / 128.0
+                    - 0.1
             })
             .collect();
 
@@ -135,17 +139,21 @@ impl AppState {
         let snapshots: Vec<Vec<f32>> = (0..32)
             .map(|s| {
                 let theta = 30.0f32 * PI / 180.0 + (t * 0.01).sin() * 0.1;
-                (0..8).map(|i| {
-                    let tau = i as f32 * 0.037 * theta.sin() / 1500.0;
-                    (2.0 * PI * 1000.0 * (tau + s as f32 / 1000.0)).cos()
-                }).collect()
+                (0..8)
+                    .map(|i| {
+                        let tau = i as f32 * 0.037 * theta.sin() / 1500.0;
+                        (2.0 * PI * 1000.0 * (tau + s as f32 / 1000.0)).cos()
+                    })
+                    .collect()
             })
             .collect();
         let beam_pattern = bf.compute(&snapshots);
 
         // CFAR
         let cfar = CfarDetector::new(2, 8, 1e-4);
-        let freq_axis: Vec<f32> = (0..spectrum_db.len()).map(|k| k as f32 * sr / 2048.0).collect();
+        let freq_axis: Vec<f32> = (0..spectrum_db.len())
+            .map(|k| k as f32 * sr / 2048.0)
+            .collect();
         let cfar_dets = cfar.detect(&spectrum_db, &freq_axis);
 
         // Classification (use MFCC as feature)
@@ -167,11 +175,14 @@ impl AppState {
             demon_blade_rate_hz: demon_result.blade_rate_hz,
             mfcc_frame,
             doa_deg: beam_pattern.doa_deg,
-            cfar_detections: cfar_dets.iter().map(|d| CfarDetectionDto {
-                frequency_hz: d.frequency_hz,
-                magnitude_db: d.magnitude_db,
-                snr_db: d.snr_db,
-            }).collect(),
+            cfar_detections: cfar_dets
+                .iter()
+                .map(|d| CfarDetectionDto {
+                    frequency_hz: d.frequency_hz,
+                    magnitude_db: d.magnitude_db,
+                    snr_db: d.snr_db,
+                })
+                .collect(),
             classification: ClassificationDto {
                 label: clf_result.label,
                 confidence: clf_result.confidence,

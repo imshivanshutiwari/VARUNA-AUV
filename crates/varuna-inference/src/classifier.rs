@@ -1,8 +1,8 @@
 //! ONNX-based acoustic target classifier using tract.
-use crate::softmax::{softmax, argmax};
+use crate::softmax::{argmax, softmax};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 use std::path::Path;
+use thiserror::Error;
 use tract_onnx::prelude::*;
 
 /// Vessel / target class names.
@@ -87,7 +87,11 @@ impl AcousticClassifier {
                 "Model not found at '{}', running in stub mode.",
                 config.model_path
             );
-            return Ok(Self { config, model: None, classes });
+            return Ok(Self {
+                config,
+                model: None,
+                classes,
+            });
         }
         let model = tract_onnx::onnx()
             .model_for_path(&config.model_path)
@@ -97,7 +101,11 @@ impl AcousticClassifier {
             .into_runnable()
             .map_err(|e| ClassifierError::InferenceError(e.to_string()))?;
 
-        Ok(Self { config, model: Some(model), classes })
+        Ok(Self {
+            config,
+            model: Some(model),
+            classes,
+        })
     }
 
     /// Classify a feature tensor of shape (n_frames, n_mels) or (batch, n_frames, n_mels).
@@ -129,8 +137,13 @@ impl AcousticClassifier {
 
         let probs = softmax(&logits);
         let (class_index, confidence) = argmax(&probs);
-        let label = self.classes.get(class_index).cloned().unwrap_or_else(|| "Unknown".to_string());
-        let is_submarine_alert = class_index == 4 && confidence >= self.config.submarine_alert_threshold;
+        let label = self
+            .classes
+            .get(class_index)
+            .cloned()
+            .unwrap_or_else(|| "Unknown".to_string());
+        let is_submarine_alert =
+            class_index == 4 && confidence >= self.config.submarine_alert_threshold;
 
         Ok(ClassificationResult {
             label,
@@ -145,7 +158,8 @@ impl AcousticClassifier {
     /// Stub classifier: produces deterministic pseudo-probabilities from feature energy.
     fn stub_classify(&self, features: &[f32]) -> Vec<f32> {
         let n_classes = self.classes.len();
-        let energy: f32 = features.iter().map(|&x| x * x).sum::<f32>() / features.len().max(1) as f32;
+        let energy: f32 =
+            features.iter().map(|&x| x * x).sum::<f32>() / features.len().max(1) as f32;
         // Use energy to select a likely class deterministically
         let seed = ((energy * 1000.0) as u64) % n_classes as u64;
         let mut logits = vec![-2.0f32; n_classes];
